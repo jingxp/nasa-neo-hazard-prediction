@@ -1,0 +1,64 @@
+
+services:
+  app:
+    build: 
+      context: ./flask-app
+      dockerfile: Dockerfile.app
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_S3_ENDPOINT_URL: http://localstack:4566
+      MODEL_NAME: neo-prediction
+    ports:
+      - "9696:9696"
+    depends_on:
+      - mlflow
+      - prefect
+      - localstack
+    command: python app.py
+
+  prefect:
+    build:
+      context: ./training
+      dockerfile: Dockerfile.prefect
+    depends_on:
+      - mlflow
+    ports:
+      - 4200:4200
+    environment:
+      PREFECT_UI_URL: http://127.0.0.1:4200/api
+      PREFECT_API_URL: http://127.0.0.1:4200/api
+      PREFECT_SERVER_API_HOST: 0.0.0.0
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      MLFLOW_S3_ENDPOINT_URL: http://localstack:4566
+
+  mlflow:
+    build:
+      dockerfile: Dockerfile.mlflow
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      MLFLOW_S3_ENDPOINT_URL: http://localstack:4566
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlflow:/mlflow
+    depends_on:
+      - localstack
+
+  localstack:
+    image: localstack/localstack
+    ports:
+      - "4566:4566"  # The edge port used by LocalStack
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - ./s3-init-scripts:/etc/localstack/init/ready.d # Mount the init scripts directory
+volumes:
+  mlflow:

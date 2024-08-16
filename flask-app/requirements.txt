@@ -1,0 +1,4 @@
+mlflow
+flask
+pandas
+boto3

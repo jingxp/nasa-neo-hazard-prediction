@@ -1,0 +1,15 @@
+FROM prefecthq/prefect:2.20.0-python3.12
+
+ENV PYTHONUNBUFFERED True
+
+RUN mkdir /training
+WORKDIR /training
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY . .
+
+RUN prefect config set PREFECT_API_URL=http://host.docker.internal:
+
+CMD ["sh","-c","prefect server start & sleep 25 && python training_flow.py"]
