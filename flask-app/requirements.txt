@@ -2,3 +2,6 @@ mlflow
 flask
 pandas
 boto3
+evidently
+psycopg
+psycopg_binary

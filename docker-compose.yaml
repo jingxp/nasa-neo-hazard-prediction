@@ -10,13 +10,19 @@ services:
       MLFLOW_TRACKING_URI: http://mlflow:5000
       MLFLOW_S3_ENDPOINT_URL: http://localstack:4566
       MODEL_NAME: neo-prediction
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
     ports:
       - "9696:9696"
     depends_on:
       - mlflow
       - prefect
       - localstack
+      - postgres
     command: python app.py
+    networks:
+      - back-tier
+      - front-tier
 
   prefect:
     build:
@@ -24,6 +30,7 @@ services:
       dockerfile: Dockerfile.prefect
     depends_on:
       - mlflow
+      - localstack
     ports:
       - 4200:4200
     environment:
@@ -34,6 +41,9 @@ services:
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
       MLFLOW_S3_ENDPOINT_URL: http://localstack:4566
+    networks:
+      - back-tier
+      - front-tier
 
   mlflow:
     build:
@@ -49,6 +59,9 @@ services:
       - ./mlflow:/mlflow
     depends_on:
       - localstack
+    networks:
+      - back-tier
+      - front-tier
 
   localstack:
     image: localstack/localstack
@@ -60,39 +73,44 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - ./s3-init-scripts:/etc/localstack/init/ready.d # Mount the init scripts directory
+    networks:
+      - back-tier
+      - front-tier
 
   postgres:
     image: postgres
     restart: always
     environment:
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: example
     ports:
-      -"5432:5432"
+      - "5432:5432"
     networks:
-      -back-tier
+      - back-tier
 
   adminer:
     image: adminer
     restart: always
     ports:
-      -"8080:8080"
+      - "8080:8080"
     networks:
-      -back-tier
-      -front-tier
+      - back-tier
+      - front-tier
 
   grafana:
     image: grafana/grafana
     user: "472"
     ports:
-      -"3000:3000"
+      - "3000:3000"
     volumes:
-      -./config/grafana_datasources.yaml:/etc/grafana/provisioning/datasources/datasource.yaml:ro
-      -./config/grafana_dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
-      -./dashboards:/opt/grafana/dashboards
+      - ./config/grafana_datasources.yaml:/etc/grafana/provisioning/datasources/datasource.yaml:ro
+      - ./config/grafana_dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
+      - ./dashboards:/opt/grafana/dashboards
     networks:
-      -back-tier
-      -front-tier
+      - back-tier
+      - front-tier
     restart: always
+
 volumes:
   mlflow: {}
   grafana_data: {}
