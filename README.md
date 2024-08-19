@@ -24,6 +24,9 @@ Usage: Used to package and deploy MLflow, Prefect, and other necessary services 
 ## MLflow:
 Purpose: Manage the machine learning lifecycle, including experimentation, reproducibility, and deployment.
 Usage: Tracks experiments, manages model versions, and facilitates the deployment of predictive models.
+## Localstack
+Purpose: simulating AWS cloud services locally
+Usage: Store Mlflow artifacts by simulating a S3 service
 ## Prefect:
 Purpose: Orchestrate and automate workflows and data pipelines.
 Usage: Handles the scheduling, execution, and monitoring of tasks related to data processing and model training.
